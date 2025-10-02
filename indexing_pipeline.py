@@ -87,7 +87,6 @@ def build_knowledge_base():
 
     print(f"Successfully loaded and annotated {len(all_docs)} documents.")
 
-    # --- [Steps 2 and 3 remain the same as your original code] ---
     print("\n--- 2. Splitting Documents (Chunking) ---")
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, 
@@ -117,4 +116,5 @@ if __name__ == "__main__":
     if not os.path.exists(DATA_DIR):
         print(f"ERROR: Data directory '{DATA_DIR}' not found. Please create it and add your study material.")
     else:
+
         build_knowledge_base()
