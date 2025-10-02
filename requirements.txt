@@ -1,0 +1,22 @@
+# Core RAG and LangChain 
+langchain-core
+langchain-community
+langchain-chroma
+pydantic
+python-dotenv 
+langchain-google-genai 
+
+# Document Loaders
+pypdf      
+docx2txt  
+
+# Local Embedding Model 
+sentence-transformers
+
+# LLM Integration 
+google-genai
+
+# API Server
+fastapi
+uvicorn[standard]
+flask
