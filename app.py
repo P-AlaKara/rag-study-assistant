@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables (e.g., GOOGLE_API_KEY)
+
 load_dotenv()
 
 from langchain_chroma import Chroma
@@ -40,8 +40,6 @@ def initialize_retriever():
     )
     
     # Use similarity score threshold to avoid low-relevance distractors.
-    # This helps us cleanly trigger the fallback path when the KB doesn't contain
-    # relevant information, instead of passing unrelated context to the model.
     rag_retriever = vectorstore.as_retriever(
         search_type="similarity_score_threshold",
         search_kwargs={
@@ -60,7 +58,6 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.0
 )
 
-# --- Enhanced Router Chain ---
 router_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      """Analyze the user's request and output ONLY one of these words:
@@ -75,7 +72,7 @@ router_prompt = ChatPromptTemplate.from_messages([
 
 router_chain = router_prompt | llm | StrOutputParser()
 
-# --- Past Paper Retriever ---
+
 def get_past_paper_retriever(unit_code=None, year=None):
     """Creates a retriever specifically for past papers with filters.
 
@@ -100,15 +97,14 @@ def get_past_paper_retriever(unit_code=None, year=None):
         }
     )
 
-# --- Past Paper Flow (Enhanced) ---
-# Use the enhanced, session-aware handler for past paper walkthroughs
+
 enhanced_past_paper = EnhancedPastPaperChain(llm, VECTORSTORE) if VECTORSTORE else None
 
-# --- Q&A Chain (RAG) ---
+
 def create_rag_chain(llm, retriever):
     """Creates the Retrieval-Augmented Generation chain."""
 
-    # RAG prompt with graceful fallback to general knowledge when context is insufficient
+    # graceful fallback to general knowledge when context is insufficient
     rag_prompt_template = """
     You are a study assistant. Prefer to answer using ONLY the provided context (student notes) when it is sufficient.
     If the context is missing, insufficient, or not relevant to the question, you MUST still answer using general knowledge.
@@ -149,7 +145,7 @@ def create_rag_chain(llm, retriever):
             for doc in docs
         ])
 
-    # Build a branching chain based on whether any documents were retrieved
+    # branching chain based on whether any documents were retrieved
     # Step 1: retrieve docs alongside the question
     pre = {
         "docs": itemgetter("question") | retriever,
@@ -177,7 +173,7 @@ def create_rag_chain(llm, retriever):
 
     return branched
 
-# --- Quiz Generation Chain ---
+
 def create_quiz_chain(llm, retriever):
     """Creates a chain to generate quizzes based on retrieved context."""
     
@@ -246,7 +242,6 @@ def create_quiz_chain(llm, retriever):
 
     return branched_quiz
 
-# --- Session Manager for Past Papers ---
 class PastPaperSession:
     """Manages the state of past paper walkthroughs."""
     def __init__(self):
@@ -264,14 +259,13 @@ class PastPaperSession:
         self.current_paper = paper_id
         self.questions_shown = questions_shown
 
-# Initialize session (in production, this would be per-user)
 past_paper_session = PastPaperSession()
 
-# --- Master Application Chain ---
+# Master Application Chain 
 if RAG_RETRIEVER:
     RAG_CHAIN = create_rag_chain(llm, RAG_RETRIEVER)
     QUIZ_CHAIN = create_quiz_chain(llm, RAG_RETRIEVER)
-    # Keep final_chain for QA/QUIZ. Past paper will be handled explicitly via enhanced handler.
+    # Past paper will be handled explicitly via enhanced handler.
     final_chain = RunnableBranch(
         (
             lambda x: "QUIZ" in router_chain.invoke({"question": x["question"]}).upper(),
@@ -295,7 +289,7 @@ def run_assistant():
     print("- Go through past papers (e.g., 'Let me go through CSC231 2024 past paper')")
     print("Type 'quit' to exit\n")
     
-    # Track whether we're in a past paper session (CLI-wide). In production, use per-user session ids.
+    # Track whether we're in a past paper session
     pastpaper_active = False
 
     while True:
@@ -313,7 +307,7 @@ def run_assistant():
             if pastpaper_active and enhanced_past_paper:
                 response = enhanced_past_paper.handle_past_paper_request(user_input, session_id="cli")
                 print(f"\nAssistant: {response}")
-                # Heuristics to end session
+                # end session conditions
                 if any(kw in response for kw in [
                     "Ending past paper session",
                     "completed all questions",
@@ -354,7 +348,7 @@ def run_demo():
     response_quiz = final_chain.invoke({"question": quiz_query})
     print(response_quiz)
     
-    # Past Paper query (enhanced flow)
+    # Past Paper query 
     past_paper_query = "I want to go through the CSC231 2024 past paper"
     print(f"\n--- PAST PAPER QUERY: {past_paper_query} ---")
     if enhanced_past_paper:
@@ -364,9 +358,9 @@ def run_demo():
         print("Past paper flow unavailable: vector store not initialized.")
 
 if __name__ == "__main__":
-    # Choose between interactive mode or demo mode
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "demo":
         run_demo()
     else:
+
         run_assistant()
