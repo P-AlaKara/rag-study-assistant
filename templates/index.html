@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Study Assistant</title>
+	<link rel="stylesheet" href="/static/css/styles.css" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+	<div class="app">
+		<header class="header">
+			<div class="brand">Study Assistant</div>
+			<div class="header-actions">
+				<button id="newSessionBtn" class="btn btn-secondary">New Session</button>
+			</div>
+		</header>
+
+		<main class="main">
+			<section class="chat-panel">
+				<div class="panel-header">
+					<h2>Chat</h2>
+				</div>
+				<div id="chatThread" class="chat-thread" aria-live="polite" aria-label="Conversation thread"></div>
+				<form id="chatForm" class="chat-input" autocomplete="off">
+					<input id="chatMessage" type="text" placeholder="Ask a question or say 'Start CSC411 2024 past paper'" aria-label="Message" />
+					<button type="submit" class="btn btn-primary">Send</button>
+				</form>
+			</section>
+
+			<section class="paper-panel">
+				<div class="panel-header">
+					<h2>Past Paper</h2>
+				</div>
+				<form id="paperForm" class="paper-form" autocomplete="off">
+					<input id="unitCode" type="text" placeholder="Unit Code (e.g., CSC411)" aria-label="Unit code" />
+					<input id="year" type="text" placeholder="Year (e.g., 2024)" aria-label="Year" />
+					<button id="startPaperBtn" type="submit" class="btn btn-primary">Start</button>
+					<button id="nextBatchBtn" type="button" class="btn btn-secondary" disabled>Next 5</button>
+				</form>
+				<div id="paperContent" class="paper-content"></div>
+			</section>
+		</main>
+
+		<footer class="footer">
+			<div>Built for students • Study Chatbot </div>
+		</footer>
+	</div>
+
+	<script>
+		window.API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:8000' : '';
+		window.SESSION_ID = crypto.randomUUID();
+	</script>
+	<script src="/static/js/app.js"></script>
+</body>
+</html>
+
