@@ -65,13 +65,7 @@ class PastPaperProcessor:
         """
         all_content = "\n".join([doc.page_content for doc in documents])
 
-        # Capture a question number and lazily consume until the next question marker
-        # Improvements over previous version:
-        # - Allow leading whitespace before markers (common in OCR/PDF text)
-        # - Support numbers wrapped in parentheses: (1) ...
-        # - Maintain the ability to match: Question 1:, Q1:, 1., 1)
-        # The pattern captures the question number in either group 1 (parenthesized) or
-        # group 2 (plain), and the text content in group 3.
+		
         question_pattern = re.compile(
             (
                 r"(?ms)"  # multiline + dotall
@@ -84,7 +78,7 @@ class PastPaperProcessor:
         matches = list(question_pattern.finditer(all_content))
         questions: List[str] = []
         if matches:
-            # Sort by numeric question number to enforce order
+            # Sort by numeric question number 
             extracted = []
             for m in matches:
                 num_str = m.group(1) or m.group(2)
@@ -95,7 +89,7 @@ class PastPaperProcessor:
             for q_num, q_text in sorted_matches:
                 questions.append(f"Question {q_num}: {q_text}")
 
-        # If no numbered questions found, split by double newlines as a fallback
+        # If no numbered questions found, split by double newlines 
         if not questions:
             sections = [s.strip() for s in re.split(r"\n\n+", all_content) if s.strip()]
             questions = [f"Question {i + 1}: {section}" for i, section in enumerate(sections) if len(section) > 20]
@@ -166,7 +160,7 @@ class EnhancedPastPaperChain:
     def __init__(self, llm, vectorstore):
         self.llm = llm
         self.vectorstore = vectorstore
-        self.sessions = {}  # Store sessions per user/conversation
+        self.sessions = {}  
         self.processor = PastPaperProcessor()
     
     def get_or_create_session(self, session_id: str = "default") -> PastPaperSession:
@@ -220,7 +214,6 @@ class EnhancedPastPaperChain:
         # Extract unit code and year
         unit_code, year = self._extract_paper_details(user_input)
         
-        # Retrieve past paper documents using Chroma's expected where syntax
         base_conditions = [{"source_type": {"$eq": "PastPaper"}}]
         if unit_code:
             base_conditions.append({"unit_code": {"$eq": unit_code}})
@@ -229,7 +222,7 @@ class EnhancedPastPaperChain:
 
         strict_filter = {"$and": base_conditions}
 
-        # Try strict filter first; if empty, relax unit_code filter due to filename metadata variations
+        # Try strict filter first; if empty, relax unit_code filter 
         retriever = self.vectorstore.as_retriever(search_kwargs={"k": 20, "filter": strict_filter})
         docs = retriever.get_relevant_documents(user_input)
         if not docs and unit_code:
@@ -256,18 +249,18 @@ class EnhancedPastPaperChain:
         response = f"**Starting {session.unit_code} ({session.year}) Past Paper**\n"
         response += f"Total questions: {session.total_questions}\n"
         response += "-" * 50 + "\n"
-        # Render questions only (no model answers shown by default)
+ 
         response += self.processor.format_batch(batch, 1)
         response += "\n" + "-" * 50 + "\n"
         
         if has_more:
-            response += "\n📝 **What would you like to do?**\n"
+            response += "\n **What would you like to do?**\n"
             response += "• Type 'next' or 'continue' to see the next 5 questions\n"
             response += "• Answer a question (e.g., 'My answer for question 1 is...')\n"
             response += "• Ask for clarification (e.g., 'Can you explain question 3?')\n"
             response += "• Type 'stop' to end the session"
         else:
-            response += "\n✅ **That's all the questions!**\n"
+            response += "\n **That's all the questions!**\n"
             response += "Feel free to attempt any question or ask for help to answer a question."
         
         return response
@@ -287,14 +280,14 @@ class EnhancedPastPaperChain:
 
         response = f"**Continuing {session.unit_code} ({session.year}) - {session.get_current_progress()}**\n"
         response += "-" * 50 + "\n"
-        # Render questions only (no model answers shown by default)
+
         response += self.processor.format_batch(batch, start_num)
         response += "\n" + "-" * 50 + "\n"
         
         if has_more:
-            response += "\n📝 Ready for more? Type 'next' to continue, or work on these questions first."
+            response += "\n Ready for more? Type 'next' to continue, or work on these questions first."
         else:
-            response += "\n✅ **These are the final questions!**"
+            response += "\n **These are the final questions!**"
         
         return response
     
@@ -309,7 +302,7 @@ class EnhancedPastPaperChain:
         
         question = session.questions[q_num - 1]
 		
-        # Lazy import to avoid requiring langchain during smoke tests
+        # Lazy import for  smoke tests
         from langchain_core.prompts import ChatPromptTemplate
         from langchain_core.output_parsers import StrOutputParser
         prompt = ChatPromptTemplate.from_template(
@@ -330,7 +323,7 @@ class EnhancedPastPaperChain:
         chain = prompt | self.llm | StrOutputParser()
         clarification = chain.invoke({"question": question})
 
-        response = f"**Clarification and Solution for Question {q_num}:**\n\n{clarification}\n\n💡 Would you like to attempt this question now?"
+        response = f"**Clarification and Solution for Question {q_num}:**\n\n{clarification}\n\n Would you like to attempt this question now?"
         return response
     
     def _process_answer(self, intent: Dict, session: PastPaperSession) -> str:
@@ -349,7 +342,7 @@ class EnhancedPastPaperChain:
 
         question_text = session.questions[q_num - 1]
 
-        # Lazy import to avoid requiring langchain during smoke tests
+        # Lazy import for during smoke tests
         from langchain_core.prompts import ChatPromptTemplate
         from langchain_core.output_parsers import StrOutputParser
         eval_prompt = ChatPromptTemplate.from_template(
@@ -422,4 +415,5 @@ class EnhancedPastPaperChain:
                 answer = chain.invoke({"question": q})
             except Exception:
                 answer = "(Unable to generate an answer at this time.)"
+
             session.model_answers[q_index] = answer
