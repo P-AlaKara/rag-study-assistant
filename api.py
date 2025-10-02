@@ -20,14 +20,12 @@ from app import (
 app = FastAPI(title="Study Assistant API", version="1.0.0")
 
 
-# Ensure chains are available
 if not RAG_RETRIEVER or not VECTORSTORE:
 	raise RuntimeError("Vector store is not initialized. Run the indexing pipeline first.")
 
 RAG_CHAIN = create_rag_chain(llm, RAG_RETRIEVER)
 QUIZ_CHAIN = create_quiz_chain(llm, RAG_RETRIEVER)
 
-# Enable CORS for local frontend
 app.add_middleware(
 	CORSMiddleware,
 	allow_origins=["*"],
@@ -130,8 +128,9 @@ def quiz(req: QuizRequest):
 	return {"quiz": answer}
 
 
-# Health endpoint
+
 @app.get("/health")
 def health():
 	return {"status": "ok"}
+
 
